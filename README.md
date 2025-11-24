@@ -1,60 +1,141 @@
-# Ghidra OSX Installer
+# Ghidra for macOS (Apple Silicon)
 
-This script automates the process of installing Ghidra as a self-contained OSX `.app` without contaminating your system with a separate Java installation. It is specifically designed for ARM64 architecture, making it suitable for Apple's M1, M2, M3, and other ARM-based Macs.
+## Overview
 
-*notice the script will NOT copy Ghidra to your Applications directory if you run it from the command line. You can either run it from the terminal or copy the script to your Applications directory and run it from there.* 
+Ghidra is a powerful reverse‑engineering platform from the NSA.  
+On Apple Silicon (M1, M2, M3, …) the official releases require a
+Java runtime that is not pre‑installed, and setting up a clean
+environment can be tedious.
 
-## Requirements
+This project bundles a recent **OpenJDK** and **Ghidra** into a single
+`Ghidra.app` that behaves like a native macOS application.  
+All required resources are isolated inside the bundle, so you can
+install the app in your **Applications** folder and run it with a
+single click – no additional Java, no `PATH` tricks, no hidden
+settings.
 
-- macOS running on ARM64 architecture (M1, M2, M3, etc.).
-- Python 3.6 or later.
-- Internet connection for downloading necessary files.
-
+---
 
 ## Features
 
-- Downloads the AppleScript template for the Ghidra launcher.
-- Downloads and extracts the latest OpenJDK.
-- Downloads and extracts the latest Ghidra.
-- Copies the Ghidra `.app` to your Applications directory.
-- Provides a colorful ASCII art banner for a fun experience.
-- Displays progress bars for downloads.
+| Feature | Description |
+|---------|-------------|
+| **Self‑contained** | The bundle contains a recent JDK (`openjdk-22.0.1`) and Ghidra (`11.0.3`). |
+| **Apple‑Silicon optimized** | Runs natively on M1/M2/M3 devices. |
+| **No system changes** | The JDK lives inside the app, so your system Java is untouched. |
+| **Easy installation** | One command or a pre‑built binary. |
+| **User‑friendly UI** | Launch the app from the **Applications** folder with a macOS‑style icon. |
+| **Progress bars & ASCII art** | The installer shows a colorful progress bar while downloading and extracting. |
 
-## Usage
+---
 
-1. Clone this repository:
-    ```bash
-    git clone https://www.github.com/ytisf/GhidraMacOS
-    ```
-2. Ensure you have Python 3 installed.
-3. Install the required dependencies:
+## Requirements
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+- macOS **12.3 or newer** (M1, M2, M3, or later)
+- Python **3.6+** (used only for the optional script)
+- Internet connection for downloading the JDK and Ghidra
 
-4. Run the script:
+---
 
-    ```bash
-    python3 install_ghidra.py
-    ```
+## Quick Start
 
-5. Enjoy. You should have a `Ghidra.app` in your `/Applications`. 
-
-## Release Package
-
-The released packages are built using PyInstaller. To build the package, you need to have PyInstaller installed. 
-They are built for "ease" of installation. Please notice you do need to have Python 3 installed on your system to run the package.
+### 1. Clone the repository
 
 ```bash
-pyinstaller --onefile --windowed launcher.py --add-data install_ghidra.py:. --add-data requirements.txt:.
+git clone https://github.com/ytisf/GhidraMacOS
+cd GhidraMacOS
 ```
 
-## Acknowledgements
+### 2. Install the optional Python dependencies
 
-- Special thanks to [yifanlu](https://gist.github.com/yifanlu/e9965cdb148b550335e57899f790cad2) for providing the AppleScript template used in this script & the inspiration.
-- Of course - [Ghidra](https://github.com/NationalSecurityAgency/ghidra).
+```bash
+pip install -r requirements.txt
+```
+
+> The installer is pure Python and only needs `colorama`, `tqdm`,
+> and `urllib`. If you don’t want to use the script, skip this step.
+
+### 3. Run the installer
+
+```bash
+python3 install_ghidra.py
+```
+
+The script will:
+
+1. Download the latest OpenJDK and Ghidra releases.
+2. Extract them into a temporary folder.
+3. Build a `Ghidra.app` bundle with all files in place.
+4. Copy the bundle to `/Applications`.
+
+After the script finishes, you can launch Ghidra by double‑clicking
+the icon in the **Applications** folder.
+
+---
+
+## Using a Pre‑built Release
+
+If you prefer not to run the Python script, download the latest
+pre‑built `.app` from the **Releases** page:
+
+- <https://github.com/ytisf/GhidraMacOS/releases>
+
+Drop the downloaded `Ghidra.app` into the **Applications** folder
+and launch it as you would any other macOS app.
+
+---
+
+## Building the Installer Yourself
+
+The installer is created with **PyInstaller**.  
+If you want to build a custom version (e.g., different JDK or Ghidra
+release), clone the repo and run:
+
+```bash
+pyinstaller launcher.spec
+```
+
+The `launcher.spec` file bundles the installer script and the icon
+into a single executable.  Adjust the spec file to change the
+download URLs or add additional resources.
+
+---
+
+## Troubleshooting
+
+| Symptom | Likely Cause | Fix |
+|---------|--------------|-----|
+| Installer fails with `Permission denied` | The temporary directory is not writable | Run the script with `sudo` or change the temp directory path |
+| Ghidra opens but crashes | Java version mismatch | Make sure the JDK in the bundle matches the Ghidra release |
+| Missing icon | Icon not bundled | Verify the `icon.icns` is present in `Ghidra.app/Contents/Resources/` |
+| `python3: command not found` | Python not installed | Install Python 3.6+ from <https://www.python.org> or via Homebrew: `brew install python` |
+
+---
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the **MIT License**.  
+See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgements
+
+- **National Security Agency (NSA)** – [Ghidra](https://github.com/NationalSecurityAgency/ghidra) reverse‑engineering platform  
+- **Ryan Kurtz** – Ghidra logo [(Apache License 2.0)](https://commons.wikimedia.org/wiki/File:Ghidra_logo.svg).
+- **AppleScript template** – inspired by yifanlu’s AppleScript work  
+- **PyInstaller** – packaging Python scripts into macOS apps
+
+---
+
+## Contributing
+
+Feel free to open issues or submit pull requests.  
+Pull requests that:
+
+- improve the installer script,
+- add support for newer Ghidra releases,
+- or add additional platforms (e.g., Windows/Mac ARM)  
+are welcome.
+
+---
