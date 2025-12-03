@@ -80,6 +80,19 @@ class Helper:
             )
             raise
 
+    def add_execute_permissions_app(self, file_path):
+        try:
+            subprocess.run(["chmod", "-R", "775", file_path], check=True)
+            print(
+                f"{Fore.GREEN}Added execute permissions to {file_path}{Style.RESET_ALL}"
+            )   
+        except subprocess.CalledProcessError as e:
+            print(
+                f"{Fore.RED}Error adding execute permissions to {file_path}: {e}{Style.RESET_ALL}"
+            )   
+            raise
+
+
     def download_file(self, url, dest):
         if os.path.exists(dest):
             print(
@@ -154,6 +167,11 @@ def main():
         # Step 5: Add execute permissions to the Ghidra launcher script
         helper.add_execute_permissions(launch_script_path)
         helper.add_execute_permissions(ghidra_run_path)
+        helper.add_execute_permissions_app(app_dir)
+
+        
+
+
 
         print(
             f"{Fore.GREEN}Ghidra installation completed successfully!{Style.RESET_ALL}"
@@ -167,3 +185,5 @@ def main():
 if __name__ == "__main__":
     print_banner()
     main()
+
+
