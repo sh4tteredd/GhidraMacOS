@@ -5,6 +5,8 @@ import tarfile
 import urllib.request
 import zipfile
 import requests
+import plistlib
+
 
 from colorama import Fore, Style, init
 from tqdm import tqdm
@@ -42,10 +44,12 @@ download_url = assets[0]["browser_download_url"]
 
 
 # URLs
-java_url = "https://download.java.net/java/GA/jdk25/bd75d5f9689641da8e1daabeccb5528b/36/GPL/openjdk-25_macos-aarch64_bin.tar.gz"
+java_url = "https://download.java.net/java/GA/jdk25/bd75d5f9689641da8e1daabeccb5528b/36/GPL/openjdk-25_macos-aarch64_bin.tar.gz" #https://jdk.java.net/archive/
 ghidra_url = assets[0]["browser_download_url"]
 
 # Paths
+
+
 cwd = os.getcwd()
 temp_dir = os.path.join(cwd, "ghidra_install")
 applet_path = os.path.join(temp_dir, "Ghidra-OSX-Launcher-Script.scpt")
@@ -53,6 +57,9 @@ app_dir = os.path.join(temp_dir, "Ghidra.app")
 jdk_dir = os.path.join(temp_dir, "jdk")
 ghidra_dir = os.path.join(temp_dir, "ghidra")
 applications_dir = "/Applications"
+icon_source = os.path.join(cwd, "icons", "icon.icns")
+icon_dest = os.path.join(app_dir, "Contents", "Resources", "icon.icns")
+info_plist_path = os.path.join(app_dir, "Contents", "Info.plist")
 
 # Names
 launch_script_path = os.path.join(
@@ -79,6 +86,26 @@ class Helper:
                 f"{Fore.RED}Error adding execute permissions to {file_path}: {e}{Style.RESET_ALL}"
             )
             raise
+    
+    def cleanup_temp_dir(self, temp_dir, keep_file):
+        try:
+            print(f"{Fore.YELLOW}Cleaning up temporary directory...{Style.RESET_ALL}")
+            for item in os.listdir(temp_dir):
+                item_path = os.path.join(temp_dir, item)
+
+            # Skip the file we want to keep
+                if os.path.abspath(item_path) == os.path.abspath(keep_file):
+                    continue
+
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
+                else:
+                    os.remove(item_path)
+            print(f"{Fore.GREEN}Cleanup completed successfully{Style.RESET_ALL}")
+        except Exception as e:
+            print(f"{Fore.RED}Cleanup failed: {e}{Style.RESET_ALL}")
+            raise
+
 
     def add_execute_permissions_app(self, file_path):
         try:
@@ -132,6 +159,24 @@ class Helper:
         except Exception as e:
             print(f"{Fore.RED}Error extracting {file_path}: {e}{Style.RESET_ALL}")
             raise
+    def set_app_icon(self, icon_source, icon_dest, plist_path):
+        try:
+            shutil.copy(icon_source, icon_dest)
+            print(f"{Fore.GREEN}Icon copied to app bundle{Style.RESET_ALL}")
+
+            with open(plist_path, "rb") as f:
+                plist = plistlib.load(f)
+
+            plist["CFBundleIconFile"] = "icon.icns"
+
+            with open(plist_path, "wb") as f:
+                plistlib.dump(plist, f)
+
+            print(f"{Fore.GREEN}Info.plist updated with icon{Style.RESET_ALL}")
+        except Exception as e:
+            print(f"{Fore.RED}Error setting icon: {e}{Style.RESET_ALL}")
+            raise
+
 
 
 def main():
@@ -140,6 +185,7 @@ def main():
         # Create Ghidra.app as an empty directory first.
         subprocess.run(["osacompile", "-o", app_dir, applet_path], check=True)
         print(f"{Fore.GREEN}Created Ghidra.app at {app_dir}{Style.RESET_ALL}")
+        helper.set_app_icon(icon_source, icon_dest, info_plist_path)
 
         # Step 2: Download and extract the latest OpenJDK
         jdk_tar_path = os.path.join(temp_dir, "openjdk.tar.gz")
@@ -176,6 +222,8 @@ def main():
         print(
             f"{Fore.GREEN}Ghidra installation completed successfully!{Style.RESET_ALL}"
         )
+        helper.cleanup_temp_dir(temp_dir, applet_path)
+
 
     except Exception as e:
         print(f"{Fore.RED}Installation failed: {e}{Style.RESET_ALL}")
