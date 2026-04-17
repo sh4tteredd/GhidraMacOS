@@ -44,7 +44,7 @@ download_url = assets[0]["browser_download_url"]
 
 
 # URLs
-java_url = "https://download.java.net/java/GA/jdk25/bd75d5f9689641da8e1daabeccb5528b/36/GPL/openjdk-25_macos-aarch64_bin.tar.gz" #https://jdk.java.net/archive/
+java_url = "https://download.java.net/java/GA/jdk26/c3cc523845074aa0af4f5e1e1ed4151d/35/GPL/openjdk-26_macos-aarch64_bin.tar.gz" #https://jdk.java.net/archive/
 ghidra_url = assets[0]["browser_download_url"]
 
 # Paths
