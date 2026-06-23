@@ -42,7 +42,7 @@ settings.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/sh4tteredd/GhidraMacOS
+git clone https://github.com/ytisf/GhidraMacOS
 cd GhidraMacOS
 ```
 
