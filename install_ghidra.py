@@ -5,6 +5,7 @@ import subprocess
 import tarfile
 import urllib.request
 import zipfile
+from datetime import datetime
 import requests
 import plistlib
 
@@ -132,13 +133,77 @@ class Helper:
 
 def get_ghidra_download_url():
     url = "https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest"
-    response = requests.get(url)
-    data = response.json()
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+    except requests.exceptions.Timeout:
+        print(
+            f"{Fore.RED}Error: Request to GitHub API timed out after 30 seconds. "
+            f"Check your internet connection and try again.{Style.RESET_ALL}"
+        )
+        raise
+    except requests.exceptions.ConnectionError:
+        print(
+            f"{Fore.RED}Error: Could not connect to the GitHub API. "
+            f"Check your internet connection or whether GitHub is reachable.{Style.RESET_ALL}"
+        )
+        raise
+    except requests.exceptions.HTTPError:
+        if response.status_code == 403 and "0" == response.headers.get(
+            "X-RateLimit-Remaining", ""
+        ):
+            reset_time = response.headers.get("X-RateLimit-Reset", "unknown")
+            if reset_time.isdigit():
+                reset_time_str = datetime.fromtimestamp(
+                    int(reset_time)
+                ).strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                reset_time_str = reset_time
+            print(
+                f"{Fore.RED}Error: GitHub API rate limit exceeded. "
+                f"Rate limit resets at: {reset_time_str}. "
+                f"Wait and try again, or use a GitHub token for authenticated requests.{Style.RESET_ALL}"
+            )
+        else:
+            print(
+                f"{Fore.RED}Error: GitHub API returned HTTP {response.status_code} "
+                f"for {url}{Style.RESET_ALL}"
+            )
+        raise
+    except requests.exceptions.RequestException as e:
+        print(
+            f"{Fore.RED}Error: Failed to reach GitHub API: {e}{Style.RESET_ALL}"
+        )
+        raise
+
+    try:
+        data = response.json()
+    except ValueError:
+        print(
+            f"{Fore.RED}Error: GitHub API returned an unexpected response "
+            f"(not valid JSON). The API may be down or the response format changed.{Style.RESET_ALL}"
+        )
+        raise
+
+    if "assets" not in data or not isinstance(data["assets"], list) or len(data["assets"]) == 0:
+        print(
+            f"{Fore.RED}Error: GitHub API response did not contain any release assets. "
+            f"The Ghidra release structure may have changed.{Style.RESET_ALL}"
+        )
+        raise RuntimeError("No release assets found in GitHub API response")
+
+    if "browser_download_url" not in data["assets"][0]:
+        print(
+            f"{Fore.RED}Error: GitHub API response is missing the expected "
+            f"'browser_download_url' field. The API schema may have changed.{Style.RESET_ALL}"
+        )
+        raise RuntimeError("Missing browser_download_url in GitHub API response")
+
     return data["assets"][0]["browser_download_url"]
 
 
 def main():
-    java_url = "https://download.java.net/java/GA/jdk26/c3cc523845074aa0af4f5e1e1ed4151d/35/GPL/openjdk-26_macos-aarch64_bin.tar.gz"
+    java_url = "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/openjdk-25.0.2_macos-aarch64_bin.tar.gz" #https://jdk.java.net/archive/
 
     print(f"{Fore.CYAN}Fetching latest Ghidra release info...{Style.RESET_ALL}")
     ghidra_url = get_ghidra_download_url()
